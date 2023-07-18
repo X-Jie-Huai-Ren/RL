@@ -59,5 +59,39 @@ class QNetAgent(object):
             action = np.argmax(q_lst.detach().numpy())
 
         return action
+    
+    def learn(self, experiences, gamma):
+        """
+        Params:
+            experiences (List[Transition]): Minibatch of `Transition`
+            gamma (float): Discount rate of Q_target
+        """
+        transitions = experiences
 
-        
+        batch = Transition(*zip(*transitions))
+
+        print(1)
+        print(2)
+
+        states = torch.cat(batch.state)
+        actions = torch.cat(batch.action).unsqueeze(1)
+        rewards = torch.cat(batch.reward)
+        next_states = torch.cat(batch.next_state)
+        dones = torch.cat(batch.done)
+
+        # 对DQN做正向传播,得到t时刻状态下的采取action的Q值 (利用的是q_local网络)
+        Q_expected = self.q_local(states).gather(1, torch.tensor(actions, dtype=torch.int64))
+
+        # 利用q_local网络获取t+1时刻下对应Q值最大的action
+        q_lst = self.q_local(next_states)
+        Q_max_action = torch.argmax(q_lst.detach(), dim=1).unsqueeze(1)
+
+        # 利用q_target网络求Q_target, 根据t+1时刻下的state和Q_max_action
+        Q_target_next = self.q_target(next_states).gather(1, torch.tensor(Q_max_action, dtype=torch.int64))
+        Q_target = rewards + gamma*Q_target_next*(1-dones)
+
+        # 优化
+        self.optimizer.zero_grad()
+        loss = self.lossfunc(Q_expected, Q_target)
+        loss.backward()
+        self.optimizer.step()
