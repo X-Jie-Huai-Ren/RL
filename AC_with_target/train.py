@@ -23,17 +23,15 @@ if __name__ == '__main__':
 
     model = PolicyNet(in_channels=3, channels_lst=channels_lst, action_dim=7)
 
-    state = env.reset()[0]
-
-    print(env.observation_space.shape)
+    state = env.reset()
 
     trans = transforms.ToTensor()
-    input = trans(state)
+    input = trans(state).unsqueeze(0)
 
     print(input.shape)
 
     out = model(input)
-    print(out.shape)
+    print(out)
 
     
         

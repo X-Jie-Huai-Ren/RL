@@ -36,8 +36,23 @@ class PolicyNet(nn.Module):
             nn.Flatten()
         )
 
-        self.model = nn.Sequential(*self.layers)
+        # 加全连接
+        self.layers.append(
+            nn.Linear(128*11*8, 1024)
+        )
+        self.layers.append(
+            nn.ReLU()
+        )
+        self.layers.append(
+            nn.Dropout(0.5)
+        )
 
+        # 加输出层
+        self.layers.append(
+            nn.Linear(1024, action_dim)
+        )
+
+        self.model = nn.Sequential(*self.layers)
 
 
     def forward(self, x):
@@ -45,3 +60,7 @@ class PolicyNet(nn.Module):
         return self.model(x)
             
 
+
+# 价值网络
+# 对于传统的AC算法，对actor网络(策略网络)的训练还是基于最大action-value的，也就是传统的DQN训练模式
+# 而对于critic网络(价值网络)的训练不是基于state-value(输出维度为1)，而是action-vlaue(所以输出维度是action_dim)2
