@@ -9,5 +9,6 @@ Transition = namedtuple('Transition', ('state', 'action', 'reward', 'next_state'
 
 
 # eps decay
-def eps_decay():
-    pass
+def eps_decay(eps, eps_decay_rate=1e-6):
+    
+    return max(0.01, eps-eps_decay_rate)
