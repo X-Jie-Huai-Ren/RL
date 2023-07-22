@@ -25,13 +25,13 @@ class TrainManager:
     def train_episode(self):
         
         # 状态重置
-        state = self.env.reset()[0]
+        state = self.env.reset()
 
         done = False
         total_reward = 0
         cur_step = 0
 
-        self.env.render()
+        # self.env.render()
         # start episode
         while not done:
             # 根据当前状态采取action
