@@ -12,7 +12,7 @@ from model import ValueNet
 
 class PPO2Agent:
 
-    def __init__(self, state_dim, hidden_dim, action_dim, max_action, min_action, device, lr=0.0001, gamma=0.9, eps=0.2) -> None:
+    def __init__(self, state_dim, hidden_dim, action_dim, max_action, min_action, device, a_lr=0.0001, c_lr=0.0003, gamma=0.9, eps=0.2) -> None:
         """
         Params:
             state_dim: int, 状态维度
@@ -32,7 +32,8 @@ class PPO2Agent:
         self.max_action = max_action
         self.min_action = min_action
         self.device = device
-        self.lr = lr
+        self.a_lr = a_lr
+        self.c_lr = c_lr
         self.gamma = gamma
         self.eps = eps
 
@@ -48,8 +49,8 @@ class PPO2Agent:
         self.criticLossFunc = nn.MSELoss()
 
         # 定义优化器
-        self.policyNewOptimizer = optim.Adam(self.policy_new.parameters(), lr=self.lr)
-        self.criticOptimizer = optim.Adam(self.critic.parameters(), lr=self.lr)
+        self.policyNewOptimizer = optim.Adam(self.policy_new.parameters(), lr=self.a_lr)
+        self.criticOptimizer = optim.Adam(self.critic.parameters(), lr=self.c_lr)
 
 
     # 第一步: 根据策略网络policy_old, 选择action

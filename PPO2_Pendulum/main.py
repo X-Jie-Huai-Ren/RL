@@ -11,7 +11,7 @@ from PPO2Agents import PPO2Agent
 
 class TrainManager:
 
-    def __init__(self, env, agent, num_episodes=10000, len_each_episode=640, batch_size=64, gamma=0.9) -> None:
+    def __init__(self, env, agent, num_episodes=1000, len_each_episode=200, batch_size=128, gamma=0.9) -> None:
         """
         env: 环境
         agent: PPO2Agent
@@ -26,7 +26,7 @@ class TrainManager:
         self.batch_size = batch_size
         self.gamma = gamma
         
-        self.writer = SummaryWriter('./logs')
+        self.writer = SummaryWriter('./logs5')
 
     def train_episode(self):
 
@@ -45,14 +45,16 @@ class TrainManager:
             
             buffer_s.append(state)
             buffer_a.append(action)
-            buffer_r.append(reward)
+            buffer_r.append((reward+8)/8)
             buffer_a_logp.append(action_logprob)
 
             state = next_state
             total_reward += reward
 
+            reward = (reward - reward.mean()) / (reward.std() + 1e-5)
+
             # PPO 参数更新
-            if (timestep+1) % self.batch_size == 0:
+            if (timestep+1) % self.batch_size == 0 or timestep == self.len_each_episode-1:
                 # 在next_state下的Q值
                 next_state_Q = self.agent.get_Q(next_state)
                 discounted_r = []
@@ -98,7 +100,9 @@ if __name__ == '__main__':
     min_action = env.action_space.low[0]
 
 
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cpu")
+
 
     # state = env.reset()[0]
     # state = FloatTensor(state).to(device)

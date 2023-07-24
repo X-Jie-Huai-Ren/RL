@@ -6,6 +6,7 @@ import numpy as np
 import gym
 import os
 import matplotlib.pyplot as plt
+from torch.utils.tensorboard import SummaryWriter
 
 
 
@@ -148,7 +149,7 @@ if __name__ == '__main__':
     os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
     
     # 设置环境
-    env = gym.make('Pendulum-v1', render_mode="human").unwrapped
+    env = gym.make('Pendulum-v1').unwrapped
     # 状态特征有3个：杆子的角度sin,cos,角速度  状态是连续的，有无限多个
     state_num = env.observation_space.shape[0]
     # 动作特征有1个: 力矩   限定在[-2, 2]之间的任意实数,动作也有无限多个
@@ -188,14 +189,15 @@ if __name__ == '__main__':
         actor = Actor(state_num, action_num, min_action, max_action, Actor_Update_Steps, method)
         critic = Critic(state_num, 1, Critic_Update_Steps, lr=critic_lr)
         all_ep_r = []
+        writer = SummaryWriter('./logs')
         for episode in range(EP_MAX):
             # 环境重置
             observation = env.reset()[0]
             buffer_s, buffer_a, buffer_r,buffer_a_logp = [], [], [],[]
             reward_totle=0
             for timestep in range(EP_LEN):
-                if render:
-                    env.render()
+                # if render:
+                #     env.render()
                 action,action_logprob=actor.choose_action(observation)
                 observation_, reward, done, info, _ = env.step(action)
                 buffer_s.append(observation)
@@ -220,23 +222,25 @@ if __name__ == '__main__':
                     actor.learn(bs,ba,advantage,bap)#actor部分更新
                     actor.update_oldpi()  # pi-new的参数赋给pi-old
                     # critic.learn(bs,br)
+
+                writer.add_scalar('return', reward_totle, episode)
             if episode == 0:
                 all_ep_r.append(reward_totle)
             else:
                 all_ep_r.append(all_ep_r[-1] * 0.9 + reward_totle * 0.1)
             print("\rEp: {} |rewards: {}".format(episode, reward_totle), end="")
             #保存神经网络参数
-            if episode % 50 == 0 and episode > 100:#保存神经网络参数
-                save_data = {'net': actor.old_pi.state_dict(), 'opt': actor.optimizer.state_dict(), 'i': episode}
-                torch.save(save_data, "D:\Study\PythonWorkSpace\RL\Algorithm\PPO2\PPO2_model_actor.pth")
-                save_data = {'net': critic.critic_v.state_dict(), 'opt': critic.optimizer.state_dict(), 'i': episode}
-                torch.save(save_data, "D:\Study\PythonWorkSpace\RL\Algorithm\PPO2\PPO2_model_critic.pth")
+            # if episode % 50 == 0 and episode > 100:#保存神经网络参数
+            #     save_data = {'net': actor.old_pi.state_dict(), 'opt': actor.optimizer.state_dict(), 'i': episode}
+            #     torch.save(save_data, "D:\Study\PythonWorkSpace\RL\Algorithm\PPO2\PPO2_model_actor.pth")
+            #     save_data = {'net': critic.critic_v.state_dict(), 'opt': critic.optimizer.state_dict(), 'i': episode}
+            #     torch.save(save_data, "D:\Study\PythonWorkSpace\RL\Algorithm\PPO2\PPO2_model_critic.pth")
 
-        env.close()
-        plt.plot(np.arange(len(all_ep_r)), all_ep_r)
-        plt.xlabel('Episode')
-        plt.ylabel('Moving averaged episode reward')
-        plt.show()
+        # env.close()
+        # plt.plot(np.arange(len(all_ep_r)), all_ep_r)
+        # plt.xlabel('Episode')
+        # plt.ylabel('Moving averaged episode reward')
+        # plt.show()
 
     else:
         print('PPO2测试中...')
